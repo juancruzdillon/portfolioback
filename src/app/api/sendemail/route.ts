@@ -26,24 +26,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { from, to, subject, body }: EmailRequestBody = await request.json();
+    let { subject, body }: EmailRequestBody = await request.json();
 
-    if (!from || !to || !subject || !body) {
+    if (!subject || !body) {
       return NextResponse.json(
-        { message: 'Missing required fields: from, to, subject, body' },
-        { status: 400 }
-      );
-    }
-
-    // Validate email formats (basic validation)
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(from) || !emailRegex.test(to)) {
-      return NextResponse.json(
-        { message: 'Invalid email format for "from" or "to" field.' },
+        { message: 'Missing required fields: subject, body' },
         { status: 400 }
       );
     }
     
+    body = `
+      <h1>${subject}</h1>
+      <br />
+      ${body}
+    `;
     const transporter = nodemailer.createTransport({
       host: process.env.EMAIL_HOST,
       port: Number(process.env.EMAIL_PORT),
@@ -59,8 +55,8 @@ export async function POST(request: NextRequest) {
     });
 
     const mailOptions = {
-      from: from, // Sender address from request body
-      to: to, // List of receivers from request body
+      from: process.env.EMAIL_USER, // Sender address from request body
+      to: process.env.EMAIL_USER, // List of receivers from request body
       subject: subject, // Subject line from request body
       html: body, // HTML body from request body
     };
